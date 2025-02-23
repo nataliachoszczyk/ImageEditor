@@ -4,6 +4,7 @@ from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 import io
 from filters.BrightAdjuster import BrightAdjuster
+from filters.GaussianBlur import GaussianBlur
 from filters.Grayscale import Grayscale
 from filters.Threshold import Threshold
 from imageHandler.ImageImporter import ImageImporter
@@ -27,9 +28,13 @@ class ImageEditor(QWidget):
         image_layout = QHBoxLayout()
         control_layout = QVBoxLayout()
 
+        self.setMinimumSize(1100, 750)
+
         # Labels for images
         self.original_label = QLabel("Original Image")
         self.edited_label = QLabel("Edited Image")
+        self.original_label.setMinimumSize(300, 300)  # Adjust as needed
+        self.edited_label.setMinimumSize(300, 300)  # Adjust as needed
 
         # Display placeholder images initially
         self.display_image(None, self.original_label)
@@ -44,7 +49,7 @@ class ImageEditor(QWidget):
 
         #Threshold checkbox
         self.threshold_checkbox = QCheckBox("Threshold")
-        self.threshold_checkbox.stateChanged.connect(self.toggle_threshold)
+        self.threshold_checkbox.stateChanged.connect(self.update_image)
 
         # Threshold slider
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal)
@@ -66,6 +71,18 @@ class ImageEditor(QWidget):
 
         self.grayscale_none.setChecked(True)  # Default selection
         self.grayscale_group.buttonToggled.connect(self.update_image)
+
+        # gaussian blur toggle
+        self.gaussian_blur_checkbox = QCheckBox("Gaussian Blur")
+        self.gaussian_blur_checkbox.stateChanged.connect(self.update_image)
+
+        # gaussian blur slider
+        self.gaussian_blur_slider = QSlider(Qt.Orientation.Horizontal)
+        self.gaussian_blur_slider.setMinimum(1)
+        self.gaussian_blur_slider.setMaximum(11)
+        self.gaussian_blur_slider.setValue(1)
+        self.gaussian_blur_slider.valueChanged.connect(self.update_image)
+
 
         # Save button
         save_button = QPushButton("Save Edited Image")
@@ -90,11 +107,17 @@ class ImageEditor(QWidget):
         grayscale_layout.addWidget(self.grayscale_luminosity)
         grayscale_layout.addWidget(self.grayscale_even)
 
+        gaussian_blur_layout = QVBoxLayout()
+        gaussian_blur_layout.addWidget(self.gaussian_blur_checkbox)
+        gaussian_blur_layout.addWidget(QLabel("Gaussian Blur:"))
+        gaussian_blur_layout.addWidget(self.gaussian_blur_slider)
+
 
         control_layout.addWidget(QLabel("Adjust Brightness:"))
         control_layout.addWidget(self.brightness_slider)
         control_layout.addLayout(grayscale_layout)
         control_layout.addLayout(threshold_layout)
+        control_layout.addLayout(gaussian_blur_layout)
         control_layout.addWidget(import_button)
         control_layout.addWidget(save_button)
 
@@ -103,6 +126,12 @@ class ImageEditor(QWidget):
 
         self.setLayout(main_layout)
         self.resize(800, 400)
+
+    def resizeEvent(self, event):
+        """Automatically resizes images when the window is resized."""
+        self.display_image(self.edited_image, self.edited_label)
+        self.display_image(self.original_image, self.original_label)
+        super().resizeEvent(event)
 
     def display_image(self, pil_image, label):
         if pil_image is None:
@@ -115,7 +144,10 @@ class ImageEditor(QWidget):
         pil_image.save(byte_array, format='PNG')
         q_image = QImage.fromData(byte_array.getvalue())
         pixmap = QPixmap.fromImage(q_image)
-        label.setPixmap(pixmap.scaled(350, 350, Qt.AspectRatioMode.KeepAspectRatio))
+
+        # Scale image to fit QLabel while maintaining aspect ratio
+        label.setPixmap(
+            pixmap.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def update_image(self):
         """Apply filters to the image and display the edited image."""
@@ -136,15 +168,12 @@ class ImageEditor(QWidget):
             if self.threshold_checkbox.isChecked():
                 self.edited_image = self.threshold.apply(self.edited_image, self.threshold_slider.value())
 
+            if self.gaussian_blur_checkbox.isChecked():
+                self.edited_image = self.gaussian_blur.apply(self.edited_image, kernel_size = self.gaussian_blur_slider.value() *2-1)
+
             self.display_image(self.edited_image, self.edited_label)
 
-    def toggle_grayscale(self):
-        """Apply grayscale filter when checkbox is toggled."""
-        self.update_image()
 
-    def toggle_threshold(self):
-        """Apply threshold filter when checkbox is toggled."""
-        self.update_image()
 
     def import_image(self):
         # Open file dialog to select an image
@@ -155,6 +184,7 @@ class ImageEditor(QWidget):
             self.adjuster = BrightAdjuster(self.original_image)
             self.grayscale = Grayscale()
             self.threshold = Threshold()
+            self.gaussian_blur = GaussianBlur()
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
             self.display_image(self.edited_image, self.edited_label)
