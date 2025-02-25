@@ -6,20 +6,16 @@ from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 import io
 
-from filters.BoxBlur import BoxBlur
-from filters.BrightAdjuster import BrightAdjuster
-from filters.ContrastAdjuster import ContrastAdjuster
-from filters.GaussianBlur import GaussianBlur
-from filters.Grayscale import Grayscale
-from filters.Negative import Negative
-from filters.Threshold import Threshold
+from filters.Brightness import adjust_brightness
+from filters.ContrastAdjuster import adjust_contrast
+from filters.Grayscale import apply_grayscale
+from filters.Negative import apply_negative
+from filters.Threshold import apply_threshold
 from filters.Blur import *
 from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
 # TODO estetyka
-# TODO zmienic zeby nie bylo kilka razy kodowania jako rgb i z powrotem i tak samo na array z image itd w kazdej funkcji - Mateusz
-# TODO zmienic sposob dodawania zdjecia do brightness adjustera - Mateusz
 # TODO zmienic organizacje plikow, przejscie z klas na funkcje - Mateusz
 # TODO zrobic zeby filtry byly w dwoch kolumnach albo cos
 # TODO filtry: usredniajacy (kolowy i zwykly), wyostrzjacy + slidery do intensywnosci - Mateusz
@@ -200,28 +196,27 @@ class ImageEditor(QWidget):
         """Apply filters to the image and display the edited image."""
         if self.original_image is not None:
             self.edited_image = self.original_image.copy()
-            print(type(self.edited_image))
 
             if self.brightness_slider.value() != 150:
                 value = self.brightness_slider.value() - 150  # Shift value to range from -150 to 150
-                self.edited_image = self.adjuster.adjust_brightness(self.edited_image, value)
+                self.edited_image = adjust_brightness(self.edited_image, value)
 
             if self.contrast_slider.value() != 50:
                 value = self.contrast_slider.value() /50
-                self.edited_image = self.contrast_adjuster.apply(self.edited_image,value)
+                self.edited_image = adjust_contrast(self.edited_image,value)
 
             grayscale_mode = self.grayscale_group.checkedId()
 
             if grayscale_mode == 1:
-                self.edited_image = self.grayscale.apply(self.edited_image, 'luminosity')
+                self.edited_image = apply_grayscale(self.edited_image, 'luminosity')
             elif grayscale_mode == 2:
-                self.edited_image = self.grayscale.apply(self.edited_image, 'even')
+                self.edited_image = apply_grayscale(self.edited_image, 'even')
 
             if self.threshold_checkbox.isChecked():
-                self.edited_image = self.threshold.apply(self.edited_image, self.threshold_slider.value())
+                self.edited_image = apply_threshold(self.edited_image, self.threshold_slider.value())
 
             if self.negative_checkbox.isChecked():
-                self.edited_image = self.negative.apply(self.edited_image)
+                self.edited_image = apply_negative(self.edited_image)
 
             blur_mode = self.blur_group.checkedId()
             if blur_mode == 1:
@@ -242,13 +237,6 @@ class ImageEditor(QWidget):
         if image_path:
             # Load the image using the ImageImporter
             self.original_image = np.array(ImageImporter.load_image(image_path).convert("RGB"))
-            self.adjuster = BrightAdjuster()
-            self.grayscale = Grayscale()
-            self.threshold = Threshold()
-            self.gaussian_blur = GaussianBlur()
-            self.box_blur = BoxBlur()
-            self.contrast_adjuster = ContrastAdjuster()
-            self.negative = Negative()
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
             self.display_image(self.edited_image, self.edited_label)
