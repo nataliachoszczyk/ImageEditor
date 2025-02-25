@@ -3,13 +3,27 @@ from PyQt6.QtWidgets import QWidget, QLabel, QSlider, QHBoxLayout, QVBoxLayout, 
 from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 import io
+
+from filters.BoxBlur import BoxBlur
 from filters.BrightAdjuster import BrightAdjuster
+from filters.ContrastAdjuster import ContrastAdjuster
 from filters.GaussianBlur import GaussianBlur
 from filters.Grayscale import Grayscale
+from filters.Negative import Negative
 from filters.Threshold import Threshold
 from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
+# TODO estetyka
+# TODO zmienic zeby nie bylo kilka razy kodowania jako rgb i z powrotem i tak samo na array z image itd w kazdej funkcji - Mateusz
+# TODO zmienic sposob dodawania zdjecia do brightness adjustera - Mateusz
+# TODO zmienic organizacje plikow, przejscie z klas na funkcje - Mateusz
+# TODO zrobic zeby filtry byly w dwoch kolumnach albo cos
+# TODO filtry: usredniajacy (kolowy i zwykly), wyostrzjacy + slidery do intensywnosci - Mateusz
+# TODO histogram - Natalka
+# TODO projekcje pozioma, pionowa
+# TODO wykrywanie krawedzi: krzyz robertsa, operator sobela
+# TODO dodatkowe na 5 
 
 class ImageEditor(QWidget):
     def __init__(self):
@@ -33,8 +47,8 @@ class ImageEditor(QWidget):
         # Labels for images
         self.original_label = QLabel("Original Image")
         self.edited_label = QLabel("Edited Image")
-        self.original_label.setMinimumSize(300, 300)  # Adjust as needed
-        self.edited_label.setMinimumSize(300, 300)  # Adjust as needed
+        self.original_label.setMinimumSize(300, 300)
+        self.edited_label.setMinimumSize(300, 300)
 
         # Display placeholder images initially
         self.display_image(None, self.original_label)
@@ -42,8 +56,8 @@ class ImageEditor(QWidget):
 
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
-        self.brightness_slider.setMinimum(0)  # 0.5x brightness
-        self.brightness_slider.setMaximum(300)  # 1.5x brightness
+        self.brightness_slider.setMinimum(0)
+        self.brightness_slider.setMaximum(300)
         self.brightness_slider.setValue(150)  # Default (no change)
         self.brightness_slider.valueChanged.connect(self.update_image)
 
@@ -72,17 +86,39 @@ class ImageEditor(QWidget):
         self.grayscale_none.setChecked(True)  # Default selection
         self.grayscale_group.buttonToggled.connect(self.update_image)
 
+        # negative checkbox
+        self.negative_checkbox = QCheckBox("Negative")
+        self.negative_checkbox.stateChanged.connect(self.update_image)
+
         # gaussian blur toggle
-        self.gaussian_blur_checkbox = QCheckBox("Gaussian Blur")
-        self.gaussian_blur_checkbox.stateChanged.connect(self.update_image)
+        self.blur_group = QButtonGroup(self)
+
+        self.blur_none= QRadioButton("None")
+        self.blur_gauss_radio = QRadioButton("Gaussian")
+        self.blur_box_radio = QRadioButton("Box")
+
+        self.blur_group.addButton(self.blur_none, 0)
+        self.blur_group.addButton(self.blur_gauss_radio, 1)
+        self.blur_group.addButton(self.blur_box_radio, 2)
+
+        self.blur_none.setChecked(True)  # Default selection
+        self.blur_group.buttonToggled.connect(self.update_image)
 
         # gaussian blur slider
-        self.gaussian_blur_slider = QSlider(Qt.Orientation.Horizontal)
-        self.gaussian_blur_slider.setMinimum(1)
-        self.gaussian_blur_slider.setMaximum(11)
-        self.gaussian_blur_slider.setValue(1)
-        self.gaussian_blur_slider.valueChanged.connect(self.update_image)
+        self.blur_slider = QSlider(Qt.Orientation.Horizontal)
+        self.blur_slider.setMinimum(1)
+        self.blur_slider.setMaximum(11)
+        self.blur_slider.setValue(1)
+        self.blur_slider.valueChanged.connect(self.update_image)
 
+        # contrast slider
+        self.contrast_slider = QSlider(Qt.Orientation.Horizontal)
+        self.contrast_slider.setMinimum(0)  # Min is 0 for no contrast
+        self.contrast_slider.setMaximum(100)  # Max is 100 for 200% contrast
+        self.contrast_slider.setValue(50)  # Default to 50% (no change)
+
+        # Connect slider value change to update image function
+        self.contrast_slider.valueChanged.connect(self.update_image)
 
         # Save button
         save_button = QPushButton("Save Edited Image")
@@ -107,17 +143,23 @@ class ImageEditor(QWidget):
         grayscale_layout.addWidget(self.grayscale_luminosity)
         grayscale_layout.addWidget(self.grayscale_even)
 
-        gaussian_blur_layout = QVBoxLayout()
-        gaussian_blur_layout.addWidget(self.gaussian_blur_checkbox)
-        gaussian_blur_layout.addWidget(QLabel("Gaussian Blur:"))
-        gaussian_blur_layout.addWidget(self.gaussian_blur_slider)
+        blur_layout = QVBoxLayout()
+        blur_layout.addWidget(QLabel("Blur Mode:"))
+        blur_layout.addWidget(self.blur_none)
+        blur_layout.addWidget(self.blur_gauss_radio)
+        blur_layout.addWidget(self.blur_box_radio)
+        blur_layout.addWidget(QLabel("Blur intensity:"))
+        blur_layout.addWidget(self.blur_slider)
 
 
         control_layout.addWidget(QLabel("Adjust Brightness:"))
         control_layout.addWidget(self.brightness_slider)
+        control_layout.addWidget(QLabel("Adjust Contrast:"))
+        control_layout.addWidget(self.contrast_slider)
         control_layout.addLayout(grayscale_layout)
+        control_layout.addWidget(self.negative_checkbox)
         control_layout.addLayout(threshold_layout)
-        control_layout.addLayout(gaussian_blur_layout)
+        control_layout.addLayout(blur_layout)
         control_layout.addWidget(import_button)
         control_layout.addWidget(save_button)
 
@@ -158,6 +200,10 @@ class ImageEditor(QWidget):
                 value = self.brightness_slider.value() - 150  # Shift value to range from -150 to 150
                 self.edited_image = self.adjuster.adjust_brightness(value)
 
+            if self.contrast_slider.value() != 50:
+                value = self.contrast_slider.value() /50
+                self.edited_image = self.contrast_adjuster.apply(self.edited_image,value)
+
             grayscale_mode = self.grayscale_group.checkedId()
 
             if grayscale_mode == 1:
@@ -168,8 +214,15 @@ class ImageEditor(QWidget):
             if self.threshold_checkbox.isChecked():
                 self.edited_image = self.threshold.apply(self.edited_image, self.threshold_slider.value())
 
-            if self.gaussian_blur_checkbox.isChecked():
-                self.edited_image = self.gaussian_blur.apply(self.edited_image, kernel_size = self.gaussian_blur_slider.value() *2-1)
+            if self.negative_checkbox.isChecked():
+                self.edited_image = self.negative.apply(self.edited_image)
+
+            blur_mode = self.blur_group.checkedId()
+            if blur_mode == 1:
+                self.edited_image = self.gaussian_blur.apply(self.edited_image, kernel_size = self.blur_slider.value() *2-1)
+            elif blur_mode == 2:
+                self.edited_image = self.box_blur.apply(self.edited_image, kernel_size = self.blur_slider.value() *2-1)
+
 
             self.display_image(self.edited_image, self.edited_label)
 
@@ -185,6 +238,9 @@ class ImageEditor(QWidget):
             self.grayscale = Grayscale()
             self.threshold = Threshold()
             self.gaussian_blur = GaussianBlur()
+            self.box_blur = BoxBlur()
+            self.contrast_adjuster = ContrastAdjuster()
+            self.negative = Negative()
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
             self.display_image(self.edited_image, self.edited_label)
