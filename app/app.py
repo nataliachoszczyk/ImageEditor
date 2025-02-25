@@ -10,15 +10,15 @@ from filters.Brightness import adjust_brightness
 from filters.ContrastAdjuster import adjust_contrast
 from filters.Grayscale import apply_grayscale
 from filters.Negative import apply_negative
+from filters.Sharpen import sharpen
 from filters.Threshold import apply_threshold
 from filters.Blur import *
 from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
 # TODO estetyka
-# TODO zmienic organizacje plikow, przejscie z klas na funkcje - Mateusz
-# TODO zrobic zeby filtry byly w dwoch kolumnach albo cos
-# TODO filtry: usredniajacy (kolowy i zwykly), wyostrzjacy + slidery do intensywnosci - Mateusz
+# TODO zrobic zeby filtry byly w dwoch kolumnach albo cos takiego - Mateusz
+# TODO  wyostrzjacy + slidery do intensywnosci - Mateusz
 # TODO histogram - Natalka
 # TODO projekcje pozioma, pionowa
 # TODO wykrywanie krawedzi: krzyz robertsa, operator sobela
@@ -39,7 +39,10 @@ class ImageEditor(QWidget):
         # Layouts
         main_layout = QVBoxLayout()
         image_layout = QHBoxLayout()
-        control_layout = QVBoxLayout()
+        control_layout = QHBoxLayout()
+        left_layout = QVBoxLayout()
+        right_layout = QVBoxLayout()
+        buttons_layout = QVBoxLayout()
 
         self.setMinimumSize(1100, 750)
 
@@ -89,7 +92,7 @@ class ImageEditor(QWidget):
         self.negative_checkbox = QCheckBox("Negative")
         self.negative_checkbox.stateChanged.connect(self.update_image)
 
-        # gaussian blur toggle
+        #  blur toggle
         self.blur_group = QButtonGroup(self)
 
         self.blur_none= QRadioButton("None")
@@ -111,6 +114,15 @@ class ImageEditor(QWidget):
         self.blur_slider.setMaximum(11)
         self.blur_slider.setValue(1)
         self.blur_slider.valueChanged.connect(self.update_image)
+
+        #sharpen slider
+        self.sharpen_slider = QSlider(Qt.Orientation.Horizontal)
+        self.sharpen_slider.setMinimum(0)
+        self.sharpen_slider.setMaximum(3)
+        self.sharpen_slider.setValue(0)
+        self.sharpen_slider.valueChanged.connect(self.update_image)
+
+
 
         # contrast slider
         self.contrast_slider = QSlider(Qt.Orientation.Horizontal)
@@ -153,17 +165,26 @@ class ImageEditor(QWidget):
         blur_layout.addWidget(QLabel("Blur intensity:"))
         blur_layout.addWidget(self.blur_slider)
 
+        sharpness_layout = QVBoxLayout()
+        sharpness_layout.addWidget(QLabel("Sharpen:"))
+        sharpness_layout.addWidget(self.sharpen_slider)
 
-        control_layout.addWidget(QLabel("Adjust Brightness:"))
-        control_layout.addWidget(self.brightness_slider)
-        control_layout.addWidget(QLabel("Adjust Contrast:"))
-        control_layout.addWidget(self.contrast_slider)
-        control_layout.addLayout(grayscale_layout)
-        control_layout.addWidget(self.negative_checkbox)
-        control_layout.addLayout(threshold_layout)
-        control_layout.addLayout(blur_layout)
-        control_layout.addWidget(import_button)
-        control_layout.addWidget(save_button)
+        left_layout.addWidget(QLabel("Adjust Brightness:"))
+        left_layout.addWidget(self.brightness_slider)
+        left_layout.addWidget(QLabel("Adjust Contrast:"))
+        left_layout.addWidget(self.contrast_slider)
+        left_layout.addLayout(grayscale_layout)
+        left_layout.addWidget(self.negative_checkbox)
+        left_layout.addLayout(threshold_layout)
+        right_layout.addLayout(blur_layout)
+        right_layout.addLayout(sharpness_layout)
+
+        buttons_layout.addWidget(import_button)
+        buttons_layout.addWidget(save_button)
+
+        control_layout.addLayout(left_layout)
+        control_layout.addLayout(right_layout)
+        control_layout.addLayout(buttons_layout)
 
         main_layout.addLayout(image_layout)
         main_layout.addLayout(control_layout)
@@ -225,6 +246,9 @@ class ImageEditor(QWidget):
                 self.edited_image = blur(self.edited_image,  self.blur_slider.value() *2-1, 'box')
             elif blur_mode == 3:
                 self.edited_image = blur(self.edited_image,  self.blur_slider.value() *2-1, 'circular')
+
+            if self.sharpen_slider.value() != 0:
+                self.edited_image = sharpen(self.edited_image, self.sharpen_slider.value())
 
 
             self.display_image(self.edited_image, self.edited_label)

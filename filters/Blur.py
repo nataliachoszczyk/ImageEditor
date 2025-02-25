@@ -24,6 +24,7 @@ def generate_circular_kernel( kernel_size):
     kernel /= kernel.sum()
     return kernel
 
+
 def blur(img_array, kernel_size, blur_type):
     if blur_type == "box":
         kernel = generate_box_kernel(kernel_size)
@@ -31,7 +32,7 @@ def blur(img_array, kernel_size, blur_type):
         kernel = generate_gaussian_kernel(kernel_size)
     elif blur_type == "circular":
         kernel = generate_circular_kernel(kernel_size)
-
+    img_array = np.float32(img_array)
     height, width = img_array.shape[:2]
     # if height > 1000 or width > 1000:
     #     kernel_size = max(3, kernel_size // 2)  # Reduce kernel size for large images
