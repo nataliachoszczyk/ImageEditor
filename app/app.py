@@ -1,3 +1,5 @@
+import numpy as np
+from PIL import Image
 from PyQt6.QtWidgets import QWidget, QLabel, QSlider, QHBoxLayout, QVBoxLayout, QPushButton, QFileDialog, QCheckBox, \
     QButtonGroup, QRadioButton
 from PyQt6.QtGui import QPixmap, QImage
@@ -11,6 +13,7 @@ from filters.GaussianBlur import GaussianBlur
 from filters.Grayscale import Grayscale
 from filters.Negative import Negative
 from filters.Threshold import Threshold
+from filters.Blur import *
 from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
@@ -96,10 +99,12 @@ class ImageEditor(QWidget):
         self.blur_none= QRadioButton("None")
         self.blur_gauss_radio = QRadioButton("Gaussian")
         self.blur_box_radio = QRadioButton("Box")
+        self.blur_circular_radio = QRadioButton("Circular")
 
         self.blur_group.addButton(self.blur_none, 0)
         self.blur_group.addButton(self.blur_gauss_radio, 1)
         self.blur_group.addButton(self.blur_box_radio, 2)
+        self.blur_group.addButton(self.blur_circular_radio, 3)
 
         self.blur_none.setChecked(True)  # Default selection
         self.blur_group.buttonToggled.connect(self.update_image)
@@ -148,6 +153,7 @@ class ImageEditor(QWidget):
         blur_layout.addWidget(self.blur_none)
         blur_layout.addWidget(self.blur_gauss_radio)
         blur_layout.addWidget(self.blur_box_radio)
+        blur_layout.addWidget(self.blur_circular_radio)
         blur_layout.addWidget(QLabel("Blur intensity:"))
         blur_layout.addWidget(self.blur_slider)
 
@@ -175,11 +181,10 @@ class ImageEditor(QWidget):
         self.display_image(self.original_image, self.original_label)
         super().resizeEvent(event)
 
-    def display_image(self, pil_image, label):
-        if pil_image is None:
-            label.setText("No Image")
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            return
+    def display_image(self, image, label):
+        pil_image = Image.fromarray(image) if image is not None else Image.new("RGB", (300, 300))
+        label.setText("No Image")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Convert PIL image to QPixmap
         byte_array = io.BytesIO()
@@ -193,12 +198,13 @@ class ImageEditor(QWidget):
 
     def update_image(self):
         """Apply filters to the image and display the edited image."""
-        if self.original_image:
+        if self.original_image is not None:
             self.edited_image = self.original_image.copy()
+            print(type(self.edited_image))
 
             if self.brightness_slider.value() != 150:
                 value = self.brightness_slider.value() - 150  # Shift value to range from -150 to 150
-                self.edited_image = self.adjuster.adjust_brightness(value)
+                self.edited_image = self.adjuster.adjust_brightness(self.edited_image, value)
 
             if self.contrast_slider.value() != 50:
                 value = self.contrast_slider.value() /50
@@ -219,9 +225,11 @@ class ImageEditor(QWidget):
 
             blur_mode = self.blur_group.checkedId()
             if blur_mode == 1:
-                self.edited_image = self.gaussian_blur.apply(self.edited_image, kernel_size = self.blur_slider.value() *2-1)
+                self.edited_image = blur(self.edited_image, self.blur_slider.value() *2-1, 'gaussian')
             elif blur_mode == 2:
-                self.edited_image = self.box_blur.apply(self.edited_image, kernel_size = self.blur_slider.value() *2-1)
+                self.edited_image = blur(self.edited_image,  self.blur_slider.value() *2-1, 'box')
+            elif blur_mode == 3:
+                self.edited_image = blur(self.edited_image,  self.blur_slider.value() *2-1, 'circular')
 
 
             self.display_image(self.edited_image, self.edited_label)
@@ -233,8 +241,8 @@ class ImageEditor(QWidget):
         image_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if image_path:
             # Load the image using the ImageImporter
-            self.original_image = ImageImporter.load_image(image_path)
-            self.adjuster = BrightAdjuster(self.original_image)
+            self.original_image = np.array(ImageImporter.load_image(image_path).convert("RGB"))
+            self.adjuster = BrightAdjuster()
             self.grayscale = Grayscale()
             self.threshold = Threshold()
             self.gaussian_blur = GaussianBlur()
@@ -249,4 +257,4 @@ class ImageEditor(QWidget):
         # Save the edited image
         save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if save_path:
-            ImageSaver.save_image(self.edited_image, save_path)
+            ImageSaver.save_image(Image.fromarray(self.edited_image), save_path)
