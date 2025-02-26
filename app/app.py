@@ -17,8 +17,6 @@ from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
 # TODO estetyka
-# TODO zrobic zeby filtry byly w dwoch kolumnach albo cos takiego - Mateusz
-# TODO  wyostrzjacy + slidery do intensywnosci - Mateusz
 # TODO histogram - Natalka
 # TODO projekcje pozioma, pionowa
 # TODO wykrywanie krawedzi: krzyz robertsa, operator sobela
