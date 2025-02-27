@@ -36,6 +36,7 @@ class ImageEditor(QWidget):
         self.adjuster = None
         self.grayscale = None
         self.threshold = None
+        self.setStyleSheet("background-color: #333333; color: white;")
         self.initUI()
         self.update_histogram = update_histogram
 
@@ -59,6 +60,9 @@ class ImageEditor(QWidget):
         self.histogram_label = QLabel("Histogram")
         self.histogram_label.setMinimumSize(300, 200)
         self.histogram_label.setMaximumSize(300, 200)
+        
+        for label in [self.original_label, self.edited_label, self.histogram_label]:
+            label.setStyleSheet("background-color: #333333; border: 1px solid #BB86FC; text-align: center;")
 
         # Display placeholder images initially
         self.display_image(None, self.original_label)
@@ -66,7 +70,29 @@ class ImageEditor(QWidget):
         self.display_image(None, self.histogram_label)
 
         # Brightness slider
+        slider_style = """
+            QSlider::groove:horizontal {
+                background: #BB86FC;  /* Fioletowy tor suwaka */
+                height: 4px;
+                border-radius: 2px;
+            }
+
+            QSlider::handle:horizontal {
+                background: white;  /* Białe kółeczko */
+                border: 2px solid white;  /* Fioletowa obwódka */
+                width: 14px;
+                height: 14px;
+                margin: -6px 0;  /* Dostosowanie pozycji kółeczka */
+                border-radius: 7px;  /* Zaokrąglone kółeczko */
+            }
+
+            QSlider::handle:horizontal:hover {
+                background: #EEEEEE;  /* Lekko szare kółeczko po najechaniu */
+            }
+        """
+
         self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
+        self.brightness_slider.setStyleSheet(slider_style)
         self.brightness_slider.setMinimum(0)
         self.brightness_slider.setMaximum(300)
         self.brightness_slider.setValue(150)  # Default (no change)
@@ -78,6 +104,7 @@ class ImageEditor(QWidget):
 
         # Threshold slider
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal)
+        self.threshold_slider.setStyleSheet(slider_style)
         self.threshold_slider.setMinimum(0)
         self.threshold_slider.setMaximum(255)
         self.threshold_slider.setValue(122)
@@ -119,6 +146,7 @@ class ImageEditor(QWidget):
 
         # gaussian blur slider
         self.blur_slider = QSlider(Qt.Orientation.Horizontal)
+        self.blur_slider.setStyleSheet(slider_style)
         self.blur_slider.setMinimum(1)
         self.blur_slider.setMaximum(11)
         self.blur_slider.setValue(1)
@@ -126,6 +154,7 @@ class ImageEditor(QWidget):
 
         #sharpen slider
         self.sharpen_slider = QSlider(Qt.Orientation.Horizontal)
+        self.sharpen_slider.setStyleSheet(slider_style)
         self.sharpen_slider.setMinimum(0)
         self.sharpen_slider.setMaximum(3)
         self.sharpen_slider.setValue(0)
@@ -133,6 +162,7 @@ class ImageEditor(QWidget):
 
         # contrast slider
         self.contrast_slider = QSlider(Qt.Orientation.Horizontal)
+        self.contrast_slider.setStyleSheet(slider_style)
         self.contrast_slider.setMinimum(0)  # Min is 0 for no contrast
         self.contrast_slider.setMaximum(100)  # Max is 100 for 200% contrast
         self.contrast_slider.setValue(50)  # Default to 50% (no change)
@@ -140,12 +170,16 @@ class ImageEditor(QWidget):
         # Connect slider value change to update image function
         self.contrast_slider.valueChanged.connect(self.update_image)
 
+        button_style = "QPushButton { background-color: #03DAC6; border-radius: 5px; padding: 8px; } "
+        "QPushButton:hover { background-color: #018786; }"
         # Save button
         save_button = QPushButton("Save Edited Image")
+        save_button.setStyleSheet(button_style)
         save_button.clicked.connect(self.save_image)
 
         # Import button
-        import_button = QPushButton("Import IMG")
+        import_button = QPushButton("Import Image")
+        import_button.setStyleSheet(button_style)
         import_button.clicked.connect(self.import_image)
 
         # Add widgets to layouts
