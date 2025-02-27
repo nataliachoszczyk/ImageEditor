@@ -1,43 +1,48 @@
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PyQt6.QtGui import QImage, QPixmap
 
 def update_histogram(self):
-    """Generates and displays the histogram of the edited image."""
+    """Generuje i wyświetla histogram dla kanałów RGB oraz jasności."""
     if self.edited_image is None:
         return
 
-    # Convert image to numpy array (ensure it's grayscale or RGB)
+    # Konwersja obrazu na tablicę NumPy
     img_array = np.array(self.edited_image)
 
-    # Create a figure for the histogram
-    fig = Figure(figsize=(3, 3), dpi=100)
-    ax = fig.add_subplot(111)
+    # Konwersja do skali szarości (poprawna)
+    grayscale_values = (0.33 * img_array[:, :, 0] +
+                        0.33 * img_array[:, :, 1] +
+                        0.33 * img_array[:, :, 2]).astype(np.uint8)
 
-    # Plot histograms for RGB channels
-    colors = ['red', 'green', 'blue']
-    for i, color in enumerate(colors):
-        ax.hist(img_array[:, :, i].flatten(), bins=256, color=color, alpha=0.6, histtype='step')
+    # Tworzenie histogramu
+    histogram, bin_edges = np.histogram(grayscale_values, bins=256, range=(0, 256))
 
+    # Tworzenie wykresu
+    fig, ax = plt.subplots(figsize=(4, 2), dpi=80)
+    ax.set_title("Grayscale Histogram")
     ax.set_xlim([0, 255])
-    ax.set_title("Histogram")
+    ax.set_yticks([])
 
-    # Convert plot to an image
+    # Rysowanie histogramu
+    ax.fill_between(bin_edges[:-1], histogram, color="black", alpha=1)
+
+    # Konwersja wykresu do obrazu
     canvas = FigureCanvas(fig)
     canvas.draw()
-
-    # Get the buffer (RGBA data)
     width, height = canvas.get_width_height()
-    image_data = np.frombuffer(canvas.tostring_argb(), dtype=np.uint8)
+    image_data = np.frombuffer(canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))
 
-    # Reshape to match image dimensions
-    image_data = image_data.reshape((height, width, 4))
+    # Konwersja NumPy array do QImage
+    histogram_image = QImage(image_data.tobytes(), width, height, width*4, QImage.Format.Format_ARGB32)
 
-    # Convert the numpy array into QImage
-    histogram_image = QImage(image_data.data, width, height, QImage.Format.Format_ARGB32)
-
-    # Display histogram in QLabel
+    # Wyświetlenie histogramu
     self.histogram_label.setPixmap(QPixmap.fromImage(histogram_image))
     self.histogram_label.repaint()
+
+    # Zamknięcie figury, aby uniknąć wycieków pamięci
+    plt.close(fig)
+

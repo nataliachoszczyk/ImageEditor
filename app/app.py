@@ -41,12 +41,13 @@ class ImageEditor(QWidget):
 
     def initUI(self):
         # Layouts
+        big_layout = QHBoxLayout()
         main_layout = QVBoxLayout()
+        right_bar_layout = QVBoxLayout()
         image_layout = QHBoxLayout()
         control_layout = QHBoxLayout()
         left_layout = QVBoxLayout()
         right_layout = QVBoxLayout()
-        buttons_layout = QVBoxLayout()
 
         self.setMinimumSize(1100, 750)
 
@@ -56,8 +57,8 @@ class ImageEditor(QWidget):
         self.original_label.setMinimumSize(300, 300)
         self.edited_label.setMinimumSize(300, 300)
         self.histogram_label = QLabel("Histogram")
-        self.histogram_label.setMinimumSize(100, 100)
-        self.histogram_label.setMaximumSize(200, 200)
+        self.histogram_label.setMinimumSize(300, 200)
+        self.histogram_label.setMaximumSize(300, 200)
 
         # Display placeholder images initially
         self.display_image(None, self.original_label)
@@ -150,8 +151,11 @@ class ImageEditor(QWidget):
         # Add widgets to layouts
         image_layout.addWidget(self.original_label)
         image_layout.addWidget(self.edited_label)
-        image_layout.addWidget(self.histogram_label)
-
+        
+        right_bar_layout.addWidget(self.histogram_label)
+        right_bar_layout.addWidget(import_button)
+        right_bar_layout.addWidget(save_button)
+        
         threshold_layout = QVBoxLayout()
         threshold_layout.addWidget(self.threshold_checkbox)
         threshold_layout.addWidget(QLabel("Threshold:"))
@@ -186,18 +190,17 @@ class ImageEditor(QWidget):
         right_layout.addLayout(blur_layout)
         right_layout.addLayout(sharpness_layout)
 
-        buttons_layout.addWidget(import_button)
-        buttons_layout.addWidget(save_button)
-
         control_layout.addLayout(left_layout)
         control_layout.addLayout(right_layout)
-        control_layout.addLayout(buttons_layout)
 
+        big_layout.addLayout(main_layout)
+        big_layout.addLayout(right_bar_layout)
+        
         main_layout.addLayout(image_layout)
         main_layout.addLayout(control_layout)
 
-        self.setLayout(main_layout)
-        self.resize(800, 400)
+        self.setLayout(big_layout)
+        self.resize(1000, 400)
 
     def resizeEvent(self, event):
         """Automatically resizes images when the window is resized."""
