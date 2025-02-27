@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
 from PyQt6.QtWidgets import QWidget, QLabel, QSlider, QHBoxLayout, QVBoxLayout, QPushButton, QFileDialog, QCheckBox, \
     QButtonGroup, QRadioButton
@@ -13,6 +15,7 @@ from filters.Negative import apply_negative
 from filters.Sharpen import sharpen
 from filters.Threshold import apply_threshold
 from filters.Blur import *
+from filters.Histogram import update_histogram
 from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
@@ -23,6 +26,8 @@ from imageHandler.ImageSaver import ImageSaver
 # TODO projekcje pozioma, pionowa
 # TODO wykrywanie krawedzi: krzyz robertsa, operator sobela
 # TODO dodatkowe na 5 
+# TODO ewentualnie kółeczko ładowania
+# TODO ewentualnie przyspieszenie aplikacji, rozbicie na 2 threads
 
 class ImageEditor(QWidget):
     def __init__(self):
@@ -34,6 +39,7 @@ class ImageEditor(QWidget):
         self.grayscale = None
         self.threshold = None
         self.initUI()
+        self.update_histogram = update_histogram
 
     def initUI(self):
         # Layouts
@@ -51,10 +57,14 @@ class ImageEditor(QWidget):
         self.edited_label = QLabel("Edited Image")
         self.original_label.setMinimumSize(300, 300)
         self.edited_label.setMinimumSize(300, 300)
+        self.histogram_label = QLabel("Histogram")
+        self.histogram_label.setMinimumSize(100, 100)
+        self.histogram_label.setMaximumSize(200, 200)
 
         # Display placeholder images initially
         self.display_image(None, self.original_label)
         self.display_image(None, self.edited_label)
+        self.display_image(None, self.histogram_label)
 
         # Brightness slider
         self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
@@ -92,7 +102,7 @@ class ImageEditor(QWidget):
         self.negative_checkbox = QCheckBox("Negative")
         self.negative_checkbox.stateChanged.connect(self.update_image)
 
-        #  blur toggle
+        # blur toggle
         self.blur_group = QButtonGroup(self)
 
         self.blur_none= QRadioButton("None")
@@ -122,8 +132,6 @@ class ImageEditor(QWidget):
         self.sharpen_slider.setValue(0)
         self.sharpen_slider.valueChanged.connect(self.update_image)
 
-
-
         # contrast slider
         self.contrast_slider = QSlider(Qt.Orientation.Horizontal)
         self.contrast_slider.setMinimum(0)  # Min is 0 for no contrast
@@ -144,6 +152,7 @@ class ImageEditor(QWidget):
         # Add widgets to layouts
         image_layout.addWidget(self.original_label)
         image_layout.addWidget(self.edited_label)
+        image_layout.addWidget(self.histogram_label)
 
         threshold_layout = QVBoxLayout()
         threshold_layout.addWidget(self.threshold_checkbox)
@@ -252,6 +261,7 @@ class ImageEditor(QWidget):
 
 
             self.display_image(self.edited_image, self.edited_label)
+            update_histogram(self)
 
 
 
