@@ -1,6 +1,8 @@
 import numpy as np
 from PIL import Image
-from scipy.signal import convolve2d
+# from scipy.signal import convolve2d
+
+from filters.convolve import convolve
 
 
 def generate_box_kernel( kernel_size):
@@ -39,10 +41,12 @@ def blur(img_array, kernel_size, blur_type):
 
     blurred_img = np.zeros_like(img_array)
 
+    # for c in range(3):
+    #     blurred_img[..., c] = convolve2d(
+    #         img_array[..., c], kernel, mode='same', boundary='symm'
+    #     )
     for c in range(3):
-        blurred_img[..., c] = convolve2d(
-            img_array[..., c], kernel, mode='same', boundary='symm'
-        )
+        blurred_img[..., c] = convolve(img_array[..., c], kernel)
 
     # Clip the values to ensure they remain within valid range (0 to 255)
     return np.clip(blurred_img, 0, 255).astype(np.uint8)

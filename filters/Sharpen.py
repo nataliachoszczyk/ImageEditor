@@ -1,6 +1,6 @@
 import numpy as np
-from scipy.signal import convolve2d
-
+# from scipy.signal import convolve2d
+from filters.convolve import convolve
 
 def sharpen(img_array, level):
     if level == 3: #mean-removal
@@ -18,9 +18,11 @@ def sharpen(img_array, level):
 
     sharpened_img = np.zeros_like(img_array)
 
+    # for c in range(3):
+    #     sharpened_img[..., c] = convolve2d(
+    #         img_array[..., c], kernel, mode='same', boundary='symm'
+    #     )
     for c in range(3):
-        sharpened_img[..., c] = convolve2d(
-            img_array[..., c], kernel, mode='same', boundary='symm'
-        )
+        sharpened_img[..., c] = convolve(img_array[..., c], kernel)
 
     return np.clip(sharpened_img, 0, 255).astype(np.uint8)

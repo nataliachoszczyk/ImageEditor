@@ -26,6 +26,7 @@ from imageHandler.ImageSaver import ImageSaver
 # TODO dodatkowe na 5 
 # TODO ewentualnie kółeczko ładowania
 # TODO ewentualnie przyspieszenie aplikacji, rozbicie na 2 threads
+# todo zrobic convolve
 
 class ImageEditor(QWidget):
     def __init__(self):
@@ -58,8 +59,8 @@ class ImageEditor(QWidget):
         self.original_label.setMinimumSize(300, 300)
         self.edited_label.setMinimumSize(300, 300)
         self.histogram_label = QLabel("Histogram")
-        self.histogram_label.setMinimumSize(300, 200)
-        self.histogram_label.setMaximumSize(300, 200)
+        self.histogram_label.setMinimumSize(300, 500)
+        self.histogram_label.setMaximumSize(300, 500)
         
         for label in [self.original_label, self.edited_label, self.histogram_label]:
             label.setStyleSheet("background-color: #333333; border: 1px solid #BB86FC; text-align: center;")
