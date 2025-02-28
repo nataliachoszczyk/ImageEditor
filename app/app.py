@@ -20,7 +20,6 @@ from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
 # TODO estetyka
-# TODO histogram - Natalka
 # TODO projekcje pozioma, pionowa
 # TODO wykrywanie krawedzi: krzyz robertsa, operator sobela
 # TODO dodatkowe na 5 
@@ -37,7 +36,6 @@ class ImageEditor(QWidget):
         self.adjuster = None
         self.grayscale = None
         self.threshold = None
-        self.setStyleSheet("background-color: #333333; color: white;")
         self.initUI()
         self.update_histogram = update_histogram
 
@@ -62,8 +60,8 @@ class ImageEditor(QWidget):
         self.histogram_label.setMinimumSize(300, 500)
         self.histogram_label.setMaximumSize(300, 500)
         
-        for label in [self.original_label, self.edited_label, self.histogram_label]:
-            label.setStyleSheet("background-color: #333333; border: 1px solid #BB86FC; text-align: center;")
+        #for label in [self.original_label, self.edited_label, self.histogram_label]:
+         #   label.setStyleSheet("background-color: #333333; border: 1px solid #BB86FC; text-align: center;")
 
         # Display placeholder images initially
         self.display_image(None, self.original_label)
@@ -72,25 +70,54 @@ class ImageEditor(QWidget):
 
         # Brightness slider
         slider_style = """
-            QSlider::groove:horizontal {
-                background: #BB86FC;  /* Fioletowy tor suwaka */
-                height: 4px;
-                border-radius: 2px;
-            }
-
-            QSlider::handle:horizontal {
-                background: white;  /* Białe kółeczko */
-                border: 2px solid white;  /* Fioletowa obwódka */
-                width: 14px;
-                height: 14px;
-                margin: -6px 0;  /* Dostosowanie pozycji kółeczka */
-                border-radius: 7px;  /* Zaokrąglone kółeczko */
-            }
-
-            QSlider::handle:horizontal:hover {
-                background: #EEEEEE;  /* Lekko szare kółeczko po najechaniu */
-            }
+            QSlider::groove:horizontal { background: #BB86FC; height: 4px; border-radius: 2px; }
+            QSlider::handle:horizontal { background: white; border: 2px solid white; width: 14px; height: 14px; margin: -6px 0; border-radius: 8px; }
+            QSlider::handle:horizontal:hover { background: #EEEEEE; }
         """
+        
+        
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #333333;
+                color: white;
+            }            
+            
+            QCheckBox, QRadioButton {
+                color: white;
+                font-size: 14px;
+                padding: 2px;
+            }
+
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #BB86FC;
+                border-radius: 3px;
+                background-color: #444444;
+            }
+            
+            QRadioButton::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #BB86FC;
+                border-radius: 10px;
+                background-color: #444444;
+            }
+
+            QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+                background-color: #BB86FC;
+                border: 2px solid #BB86FC;
+            }
+
+            QCheckBox::indicator:unchecked, QRadioButton::indicator:unchecked {
+                background-color: transparent;
+                border: 2px solid #BB86FC;
+            }
+
+            QCheckBox::indicator:hover, QRadioButton::indicator:hover {
+                border: 2px solid #FFFFFF;
+            }
+        """)
 
         self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
         self.brightness_slider.setStyleSheet(slider_style)
@@ -171,8 +198,18 @@ class ImageEditor(QWidget):
         # Connect slider value change to update image function
         self.contrast_slider.valueChanged.connect(self.update_image)
 
-        button_style = "QPushButton { background-color: #03DAC6; border-radius: 5px; padding: 8px; } "
-        "QPushButton:hover { background-color: #018786; }"
+        button_style = """
+            QPushButton {
+                background-color: #BB86FC;
+                border-radius: 8px;
+                padding: 12px;
+                font-size: 16px;
+                font-weight: bold;
+                color: white;
+            }
+            QPushButton:hover { background-color: #503D61; }
+        """
+        
         # Save button
         save_button = QPushButton("Save Edited Image")
         save_button.setStyleSheet(button_style)
