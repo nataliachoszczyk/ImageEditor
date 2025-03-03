@@ -25,6 +25,7 @@ from imageHandler.ImageSaver import ImageSaver
 # TODO uporządkować przyciski i ich nagłówki
 # TODO Możliwość tworzenia dowolnych wag filtrów - O CO CHODZI?
 # TODO eksport aplikacji
+# TODO ogarnąć komentarze w kodzie
 
 class ImageEditor(QWidget):
     def __init__(self):

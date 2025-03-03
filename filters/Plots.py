@@ -82,8 +82,6 @@ def update_plots(self):
     histogram_image = QImage(image_data.tobytes(), width, height, width * 4, QImage.Format.Format_ARGB32)
 
     # Wyświetlenie histogramu
-    # self.histogram_label.setPixmap(QPixmap.fromImage(histogram_image))
-    # self.histogram_label.repaint()
     self.histogram_label.setPixmap(
         QPixmap.fromImage(histogram_image).scaled(self.histogram_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
     # Zamknięcie figury, aby uniknąć wycieków pamięci
