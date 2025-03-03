@@ -1,4 +1,3 @@
-import cv2
 from PyQt6.QtCore import Qt
 import numpy as np
 import matplotlib.pyplot as plt

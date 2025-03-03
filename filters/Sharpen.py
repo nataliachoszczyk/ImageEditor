@@ -1,5 +1,4 @@
 import numpy as np
-# from scipy.signal import convolve2d
 from filters.Convolve import convolve
 
 def sharpen(img_array, level):
