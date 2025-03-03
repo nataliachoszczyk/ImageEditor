@@ -1,8 +1,6 @@
 import numpy as np
 from PIL import Image
-# from scipy.signal import convolve2d
-
-from filters.convolve import convolve
+from filters.Convolve import convolve
 
 
 def generate_box_kernel( kernel_size):

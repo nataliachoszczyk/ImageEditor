@@ -1,6 +1,6 @@
 import numpy as np
 # from scipy.signal import convolve2d
-from filters.convolve import convolve
+from filters.Convolve import convolve
 
 def sharpen(img_array, level):
     if level == 3: #mean-removal

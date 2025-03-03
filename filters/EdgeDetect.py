@@ -1,5 +1,5 @@
 import numpy as np
-from filters.convolve import convolve
+from filters.Convolve import convolve
 
 def roberts_cross(img_array):
     kernel_a = np.array([[1, 0], [0, -1]], dtype=np.float32)
