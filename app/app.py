@@ -10,6 +10,7 @@ import io
 
 from filters.Brightness import adjust_brightness
 from filters.ContrastAdjuster import adjust_contrast
+from filters.EdgeDetect import roberts_cross, sobel_operator, laplace_filter
 from filters.Grayscale import apply_grayscale
 from filters.Negative import apply_negative
 from filters.Sharpen import sharpen
@@ -197,6 +198,22 @@ class ImageEditor(QWidget):
         # Connect slider value change to update image function
         self.contrast_slider.valueChanged.connect(self.update_image)
 
+        #edgedetector
+        self.edge_group = QButtonGroup(self)
+
+        self.edge_none = QRadioButton("None")
+        self.edge_laplace = QRadioButton("Laplace")
+        self.edge_sobel = QRadioButton("Sobel")
+        self.edge_roberts = QRadioButton("Roberts")
+
+        self.edge_group.addButton(self.edge_none, 0)
+        self.edge_group.addButton(self.edge_laplace, 1)
+        self.edge_group.addButton(self.edge_sobel, 2)
+        self.edge_group.addButton(self.edge_roberts, 3)
+
+        self.edge_none.setChecked(True)
+        self.edge_group.buttonToggled.connect(self.update_image)
+
         button_style = """
             QPushButton {
                 background-color: #BB86FC;
@@ -251,6 +268,14 @@ class ImageEditor(QWidget):
         sharpness_layout.addWidget(QLabel("Sharpen:"))
         sharpness_layout.addWidget(self.sharpen_slider)
 
+        edge_layout = QVBoxLayout()
+        edge_layout.addWidget(QLabel("Edge Detection:"))
+        edge_layout.addWidget(self.edge_none)
+        edge_layout.addWidget(self.edge_laplace)
+        edge_layout.addWidget(self.edge_sobel)
+        edge_layout.addWidget(self.edge_roberts)
+
+
         left_layout.addWidget(QLabel("Adjust Brightness:"))
         left_layout.addWidget(self.brightness_slider)
         left_layout.addWidget(QLabel("Adjust Contrast:"))
@@ -260,6 +285,8 @@ class ImageEditor(QWidget):
         left_layout.addLayout(threshold_layout)
         right_layout.addLayout(blur_layout)
         right_layout.addLayout(sharpness_layout)
+        right_layout.addLayout(edge_layout)
+
 
         control_layout.addLayout(left_layout)
         control_layout.addLayout(right_layout)
@@ -330,6 +357,16 @@ class ImageEditor(QWidget):
 
             if self.sharpen_slider.value() != 0:
                 self.edited_image = sharpen(self.edited_image, self.sharpen_slider.value())
+
+            edge_mode = self.edge_group.checkedId()
+            print(edge_mode)
+            if edge_mode == 1:
+                self.edited_image = laplace_filter(self.edited_image)
+            elif edge_mode == 2:
+                self.edited_image = sobel_operator(self.edited_image)
+            elif edge_mode == 3:
+                self.edited_image = roberts_cross(self.edited_image)
+
 
 
             self.display_image(self.edited_image, self.edited_label)

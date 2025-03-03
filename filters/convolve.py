@@ -1,8 +1,6 @@
 import numpy as np
 
 def convolve(image, kernel):
-    """Performs 2D convolution without using scipy."""
-    kernel = np.flipud(np.fliplr(kernel))  # Flip kernel
     kh, kw = kernel.shape
     ih, iw = image.shape
     pad_h, pad_w = kh // 2, kw // 2

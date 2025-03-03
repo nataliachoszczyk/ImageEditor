@@ -16,6 +16,8 @@ def update_histogram(self):
     # Tworzenie histogramów dla kanałów RGB
     colors = ['red', 'green', 'blue']
     fig, ax = plt.subplots(4, 1, figsize=(6, 10), dpi=80)
+    #change backgrounf color
+    fig.patch.set_facecolor('#333333')
     ax = ax.ravel()
 
     colvals = ['#ff0000', '#00ff00', '#0000ff']
@@ -25,9 +27,13 @@ def update_histogram(self):
         ax[i].fill_between(bin_edges[:-1], histogram, color=colvals[i], alpha=0.7)
         ax[i].set_xlim([0, 255])
         ax[i].set_yticks([])
-        ax[i].set_title(f"{color.upper()}")
+        ax[i].set_facecolor('#333333')
+        ax[i].tick_params(axis='x', colors='white')
+        ax[i].tick_params(axis='y', colors='white')
+        ax[i].set_title(f"{color.upper()}", color='white')
 
-    # Konwersja do skali szarości (poprawna)
+
+        # Konwersja do skali szarości (poprawna)
     grayscale_values = (0.33 * img_array[:, :, 0] +
                         0.33 * img_array[:, :, 1] +
                         0.33 * img_array[:, :, 2]).astype(np.uint8)
@@ -37,7 +43,10 @@ def update_histogram(self):
     ax[3].fill_between(bin_edges[:-1], histogram, color="black", alpha=1)
     ax[3].set_xlim([0, 255])
     ax[3].set_yticks([])
-    ax[3].set_title("Grayscale Histogram")
+    ax[3].set_facecolor('#333333')
+    ax[3].tick_params(axis='x', colors='white')
+    ax[3].tick_params(axis='y', colors='white')
+    ax[3].set_title("Grayscale Histogram", color = 'white')
 
     # Konwersja wykresu do obrazu
     fig.tight_layout()
