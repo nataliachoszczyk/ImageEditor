@@ -25,7 +25,6 @@ from imageHandler.ImageSaver import ImageSaver
 # TODO dodatkowe na 5 
 # TODO ewentualnie kółeczko ładowania
 # TODO ewentualnie przyspieszenie aplikacji, rozbicie na 2 threads
-# todo zrobic convolve
 
 class ImageEditor(QWidget):
     def __init__(self):

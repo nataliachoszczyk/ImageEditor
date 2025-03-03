@@ -25,7 +25,7 @@ def update_histogram(self):
         ax[i].fill_between(bin_edges[:-1], histogram, color=colvals[i], alpha=0.7)
         ax[i].set_xlim([0, 255])
         ax[i].set_yticks([])
-        ax[i].set_title(f"{color.upper()} Histogram")
+        ax[i].set_title(f"{color.upper()}")
 
     # Konwersja do skali szarości (poprawna)
     grayscale_values = (0.33 * img_array[:, :, 0] +
@@ -45,7 +45,7 @@ def update_histogram(self):
     canvas.draw()
     width, height = canvas.get_width_height()
     image_data = np.frombuffer(canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))
-    image_data = image_data[:, :, [3, 2, 1, 0]]  # Swap ARGB → RGBA
+    image_data = image_data[:, :, [3, 2, 1, 0]]
 
     # Konwersja NumPy array do QImage
     histogram_image = QImage(image_data.tobytes(), width, height, width * 4, QImage.Format.Format_ARGB32)
