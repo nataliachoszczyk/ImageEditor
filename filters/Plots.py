@@ -5,18 +5,17 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PyQt6.QtGui import QImage, QPixmap
 
-def update_histogram(self):
+def update_plots(self):
     """Generuje i wyświetla histogram dla kanałów RGB oraz jasności."""
-    if self.edited_image is None:
-        return
+    # if self.edited_image is None:
+    #     self.edited_image = self.original_image
 
     # Konwersja obrazu na tablicę NumPy
     img_array = np.array(self.edited_image)
 
     # Tworzenie histogramów dla kanałów RGB
     colors = ['red', 'green', 'blue']
-    fig, ax = plt.subplots(4, 1, figsize=(6, 10), dpi=80)
-    #change backgrounf color
+    fig, ax = plt.subplots(6, 1, figsize=(6, 12), dpi=80)
     fig.patch.set_facecolor('#333333')
     ax = ax.ravel()
 
@@ -30,10 +29,10 @@ def update_histogram(self):
         ax[i].set_facecolor('#333333')
         ax[i].tick_params(axis='x', colors='white')
         ax[i].tick_params(axis='y', colors='white')
-        ax[i].set_title(f"{color.upper()}", color='white')
+        ax[i].set_title(f"{color.upper()}", color='white', fontsize=18)
 
 
-        # Konwersja do skali szarości (poprawna)
+    # Konwersja do skali szarości (poprawna)
     grayscale_values = (0.33 * img_array[:, :, 0] +
                         0.33 * img_array[:, :, 1] +
                         0.33 * img_array[:, :, 2]).astype(np.uint8)
@@ -46,8 +45,31 @@ def update_histogram(self):
     ax[3].set_facecolor('#333333')
     ax[3].tick_params(axis='x', colors='white')
     ax[3].tick_params(axis='y', colors='white')
-    ax[3].set_title("Grayscale Histogram", color = 'white')
+    ax[3].set_title("Grayscale Histogram", color = 'white', fontsize=18)
 
+
+    # Projekcja pozioma - sumowanie wartości pikseli wzdłuż wierszy
+    horizontal_projection = np.sum(grayscale_values, axis=1)
+    ax[4].plot(horizontal_projection, color="#BB86FC", linewidth=4)
+    ax[4].set_xlim([0, grayscale_values.shape[0]])
+    ax[4].set_yticks([])
+    ax[4].set_facecolor('#333333')
+    ax[4].tick_params(axis='x', colors='white')
+    ax[4].tick_params(axis='y', colors='white')
+    ax[4].set_title("Horizontal Projection", color='white', fontsize=18)
+
+
+    # Projekcja pionowa - sumowanie wartości pikseli wzdłuż kolumn
+    vertical_projection = np.sum(grayscale_values, axis=0)
+    ax[5].plot(vertical_projection, color="#BB86FC", linewidth=4)
+    ax[5].set_xlim([0, grayscale_values.shape[1]])
+    ax[5].set_yticks([])
+    ax[5].set_facecolor('#333333')
+    ax[5].tick_params(axis='x', colors='white')
+    ax[5].tick_params(axis='y', colors='white')
+    ax[5].set_title("Vertical Projection", color='white', fontsize=18)
+    
+    
     # Konwersja wykresu do obrazu
     fig.tight_layout()
     canvas = FigureCanvas(fig)

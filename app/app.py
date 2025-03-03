@@ -4,7 +4,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
 from PyQt6.QtWidgets import QWidget, QLabel, QSlider, QHBoxLayout, QVBoxLayout, QPushButton, QFileDialog, QCheckBox, \
     QButtonGroup, QRadioButton
-from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtGui import QPixmap, QImage, QIcon
 from PyQt6.QtCore import Qt
 import io
 
@@ -16,20 +16,20 @@ from filters.Negative import apply_negative
 from filters.Sharpen import sharpen
 from filters.Threshold import apply_threshold
 from filters.Blur import *
-from filters.Histogram import update_histogram
+from filters.Plots import update_plots
 from imageHandler.ImageImporter import ImageImporter
 from imageHandler.ImageSaver import ImageSaver
 
-# TODO estetyka
-# TODO projekcje pozioma, pionowa
-# TODO wykrywanie krawedzi: krzyz robertsa, operator sobela
+# TODO no image label
 # TODO dodatkowe na 5 
-# TODO ewentualnie kółeczko ładowania
-# TODO ewentualnie przyspieszenie aplikacji, rozbicie na 2 threads
+# TODO uporządkować przyciski i ich nagłówki
+# TODO Możliwość tworzenia dowolnych wag filtrów - O CO CHODZI?
+# TODO eksport aplikacji
 
 class ImageEditor(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon("logo.png"))
         self.setWindowTitle("Image Editor")
         self.original_image = None
         self.edited_image = None
@@ -37,7 +37,7 @@ class ImageEditor(QWidget):
         self.grayscale = None
         self.threshold = None
         self.initUI()
-        self.update_histogram = update_histogram
+        self.update_histogram = update_plots
 
     def initUI(self):
         # Layouts
@@ -58,11 +58,8 @@ class ImageEditor(QWidget):
         self.edited_label.setMinimumSize(300, 300)
         self.histogram_label = QLabel("Histogram")
         self.histogram_label.setMinimumSize(300, 500)
-        self.histogram_label.setMaximumSize(300, 500)
+        self.histogram_label.setMaximumSize(300, 750)
         
-        #for label in [self.original_label, self.edited_label, self.histogram_label]:
-         #   label.setStyleSheet("background-color: #333333; border: 1px solid #BB86FC; text-align: center;")
-
         # Display placeholder images initially
         self.display_image(None, self.original_label)
         self.display_image(None, self.edited_label)
@@ -127,7 +124,7 @@ class ImageEditor(QWidget):
         self.brightness_slider.valueChanged.connect(self.update_image)
 
         #Threshold checkbox
-        self.threshold_checkbox = QCheckBox("Threshold")
+        self.threshold_checkbox = QCheckBox("Binary Threshold")
         self.threshold_checkbox.stateChanged.connect(self.update_image)
 
         # Threshold slider
@@ -246,7 +243,7 @@ class ImageEditor(QWidget):
         
         threshold_layout = QVBoxLayout()
         threshold_layout.addWidget(self.threshold_checkbox)
-        threshold_layout.addWidget(QLabel("Threshold:"))
+        threshold_layout.addWidget(QLabel("Binary threshold:"))
         threshold_layout.addWidget(self.threshold_slider)
 
         grayscale_layout = QVBoxLayout()
@@ -359,7 +356,6 @@ class ImageEditor(QWidget):
                 self.edited_image = sharpen(self.edited_image, self.sharpen_slider.value())
 
             edge_mode = self.edge_group.checkedId()
-            print(edge_mode)
             if edge_mode == 1:
                 self.edited_image = laplace_filter(self.edited_image)
             elif edge_mode == 2:
@@ -370,7 +366,7 @@ class ImageEditor(QWidget):
 
 
             self.display_image(self.edited_image, self.edited_label)
-            update_histogram(self)
+            update_plots(self)
 
 
 
@@ -383,6 +379,7 @@ class ImageEditor(QWidget):
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
             self.display_image(self.edited_image, self.edited_label)
+        self.update_image()
 
     def save_image(self):
         # Save the edited image
