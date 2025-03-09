@@ -28,8 +28,6 @@ from filters.Plots import update_plots
 class ImageEditor(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon("app/logo.png"))
-        self.setWindowTitle("Image Editor")
         self.original_image = None
         self.edited_image = None
         self.adjuster = None
@@ -37,6 +35,7 @@ class ImageEditor(QWidget):
         self.threshold = None
         self.initUI()
         self.update_histogram = update_plots
+        self.show()
 
     def initUI(self):
         # Layouts
