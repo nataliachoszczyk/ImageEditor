@@ -3,7 +3,6 @@ from PIL import Image
 
 def adjust_contrast(img_array, factor):
 
-    # Calculate the mean color value of the image to serve as a reference
     mean_intensity = img_array.mean(axis=(0, 1), keepdims=True)
 
     # Apply contrast adjustment (factor > 1 increases, factor < 1 decreases)

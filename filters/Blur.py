@@ -19,7 +19,7 @@ def generate_circular_kernel( kernel_size):
 
     mask = x**2 + y**2 <= radius**2
     kernel = np.zeros((kernel_size, kernel_size))
-    kernel[mask] = 1  # Fill the circular area with 1s
+    kernel[mask] = 1
 
     kernel /= kernel.sum()
     return kernel
@@ -33,18 +33,10 @@ def blur(img_array, kernel_size, blur_type):
     elif blur_type == "circular":
         kernel = generate_circular_kernel(kernel_size)
     img_array = np.float32(img_array)
-    height, width = img_array.shape[:2]
-    # if height > 1000 or width > 1000:
-    #     kernel_size = max(3, kernel_size // 2)  # Reduce kernel size for large images
 
     blurred_img = np.zeros_like(img_array)
 
-    # for c in range(3):
-    #     blurred_img[..., c] = convolve2d(
-    #         img_array[..., c], kernel, mode='same', boundary='symm'
-    #     )
     for c in range(3):
         blurred_img[..., c] = convolve(img_array[..., c], kernel)
 
-    # Clip the values to ensure they remain within valid range (0 to 255)
     return np.clip(blurred_img, 0, 255).astype(np.uint8)

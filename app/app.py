@@ -252,6 +252,7 @@ class ImageEditor(QWidget):
         grayscale_layout.addWidget(self.grayscale_even)
 
         blur_layout = QVBoxLayout()
+        blur_layout.addWidget(QLabel(""))
         blur_layout.addWidget(QLabel("Blur Mode:"))
         blur_layout.addWidget(self.blur_none)
         blur_layout.addWidget(self.blur_gauss_radio)
@@ -362,18 +363,14 @@ class ImageEditor(QWidget):
             elif edge_mode == 3:
                 self.edited_image = roberts_cross(self.edited_image)
 
-
-
             self.display_image(self.edited_image, self.edited_label)
             update_plots(self)
-
-
 
     def import_image(self):
         # Open file dialog to select an image
         image_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if image_path:
-            # Load the image using the ImageImporter
+            # Load the image
             self.original_image = np.array(Image.open(image_path).convert("RGB"))
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
