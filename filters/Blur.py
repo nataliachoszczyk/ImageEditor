@@ -3,10 +3,10 @@ from PIL import Image
 from filters.Convolve import convolve
 
 
-def generate_box_kernel( kernel_size):
+def generate_box_kernel(kernel_size):
     return np.ones((kernel_size, kernel_size)) / (kernel_size * kernel_size)
 
-def generate_gaussian_kernel( kernel_size, sigma = 5):
+def generate_gaussian_kernel( kernel_size, sigma = 4):
     k = kernel_size // 2
     x, y = np.meshgrid(np.arange(-k, k + 1), np.arange(-k, k + 1))
     kernel = np.exp(-(x**2 + y**2) / (2 * sigma**2))
