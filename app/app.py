@@ -17,8 +17,6 @@ from filters.Sharpen import sharpen
 from filters.Threshold import apply_threshold
 from filters.Blur import *
 from filters.Plots import update_plots
-from imageHandler.ImageImporter import ImageImporter
-from imageHandler.ImageSaver import ImageSaver
 
 # TODO no image label
 # TODO dodatkowe na 5 
@@ -376,7 +374,7 @@ class ImageEditor(QWidget):
         image_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if image_path:
             # Load the image using the ImageImporter
-            self.original_image = np.array(ImageImporter.load_image(image_path).convert("RGB"))
+            self.original_image = np.array(Image.open(image_path).convert("RGB"))
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
             self.display_image(self.edited_image, self.edited_label)
@@ -386,4 +384,4 @@ class ImageEditor(QWidget):
         # Save the edited image
         save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if save_path:
-            ImageSaver.save_image(Image.fromarray(self.edited_image), save_path)
+            Image.fromarray(self.edited_image).save(save_path)
