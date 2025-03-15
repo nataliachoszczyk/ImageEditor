@@ -8,7 +8,8 @@ from PyQt6.QtGui import QPixmap, QImage, QIcon
 from PyQt6.QtCore import Qt
 import io
 
-from filters.Brightness import adjust_brightness
+from filters.Brightness import *
+from filters.Saturation import *
 from filters.ContrastAdjuster import adjust_contrast
 from filters.EdgeDetect import roberts_cross, sobel_operator, laplace_filter
 from filters.Grayscale import apply_grayscale
@@ -35,7 +36,7 @@ class ImageEditor(QWidget):
         self.threshold = None
         self.initUI()
         self.update_histogram = update_plots
-        self.show()
+        self.showMaximized()
 
     def initUI(self):
         # Layouts
@@ -70,6 +71,23 @@ class ImageEditor(QWidget):
             QSlider::handle:horizontal:hover { background: #EEEEEE; }
         """
         
+        red_slider_style = """
+            QSlider::groove:horizontal { background: red; height: 4px; border-radius: 2px; }
+            QSlider::handle:horizontal { background: white; border: 2px solid white; width: 14px; height: 14px; margin: -6px 0; border-radius: 8px; }
+            QSlider::handle:horizontal:hover { background: #EEEEEE; }
+        """
+        
+        green_slider_style = """
+            QSlider::groove:horizontal { background: green; height: 4px; border-radius: 2px; }
+            QSlider::handle:horizontal { background: white; border: 2px solid white; width: 14px; height: 14px; margin: -6px 0; border-radius: 8px; }
+            QSlider::handle:horizontal:hover { background: #EEEEEE; }
+        """
+        
+        blue_slider_style = """
+            QSlider::groove:horizontal { background: blue; height: 4px; border-radius: 2px; }
+            QSlider::handle:horizontal { background: white; border: 2px solid white; width: 14px; height: 14px; margin: -6px 0; border-radius: 8px; }
+            QSlider::handle:horizontal:hover { background: #EEEEEE; }
+        """
         
         self.setStyleSheet("""
             QWidget {
@@ -120,6 +138,28 @@ class ImageEditor(QWidget):
         self.brightness_slider.setMaximum(300)
         self.brightness_slider.setValue(150)  # Default (no change)
         self.brightness_slider.valueChanged.connect(self.update_image)
+        
+        self.red_slider = QSlider(Qt.Orientation.Horizontal)
+        self.red_slider.setStyleSheet(red_slider_style)
+        self.red_slider.setMinimum(0)
+        self.red_slider.setMaximum(150)
+        self.red_slider.setValue(0)  # Default (no change)
+        self.red_slider.valueChanged.connect(self.update_image)
+        
+        self.green_slider = QSlider(Qt.Orientation.Horizontal)
+        self.green_slider.setStyleSheet(green_slider_style)
+        self.green_slider.setMinimum(0)
+        self.green_slider.setMaximum(150)
+        self.green_slider.setValue(0)  # Default (no change)
+        self.green_slider.valueChanged.connect(self.update_image)
+        
+        self.blue_slider = QSlider(Qt.Orientation.Horizontal)
+        self.blue_slider.setStyleSheet(blue_slider_style)
+        self.blue_slider.setMinimum(0)
+        self.blue_slider.setMaximum(150)
+        self.blue_slider.setValue(0)  # Default (no change)
+        self.blue_slider.valueChanged.connect(self.update_image)
+        
 
         #Threshold checkbox
         self.threshold_checkbox = QCheckBox("Binary Threshold")
@@ -236,6 +276,21 @@ class ImageEditor(QWidget):
         image_layout.addWidget(self.edited_label)
         
         right_bar_layout.addWidget(self.histogram_label)
+        
+
+        kernel_layout = QHBoxLayout()
+        kernel_layout.addWidget(QLabel("Custom kernel weights:"))
+        
+        button_3x3 = QPushButton("3x3")
+        button_5x5 = QPushButton("5x5")
+        button_group = QButtonGroup()
+        button_group.addButton(button_3x3)
+        button_group.addButton(button_5x5)
+        kernel_layout.addWidget(button_3x3)
+        kernel_layout.addWidget(button_5x5)
+        right_bar_layout.addLayout(kernel_layout)
+
+        
         right_bar_layout.addWidget(import_button)
         right_bar_layout.addWidget(save_button)
         
@@ -243,6 +298,7 @@ class ImageEditor(QWidget):
         threshold_layout.addWidget(self.threshold_checkbox)
         threshold_layout.addWidget(QLabel("Binary threshold:"))
         threshold_layout.addWidget(self.threshold_slider)
+        
 
         grayscale_layout = QVBoxLayout()
         grayscale_layout.addWidget(QLabel("Grayscale Mode:"))
@@ -274,6 +330,11 @@ class ImageEditor(QWidget):
 
         left_layout.addWidget(QLabel("Adjust Brightness:"))
         left_layout.addWidget(self.brightness_slider)
+        left_layout.addWidget(QLabel("Adjust RGB Saturation"))
+        left_layout.addWidget(self.red_slider)
+        left_layout.addWidget(self.green_slider)
+        left_layout.addWidget(self.blue_slider)
+        
         left_layout.addWidget(QLabel("Adjust Contrast:"))
         left_layout.addWidget(self.contrast_slider)
         left_layout.addWidget(self.negative_checkbox)
@@ -325,6 +386,18 @@ class ImageEditor(QWidget):
             if self.brightness_slider.value() != 150:
                 value = self.brightness_slider.value() - 150  # Shift value to range from -150 to 150
                 self.edited_image = adjust_brightness(self.edited_image, value)
+                
+            if self.red_slider.value() != 150:
+                value = self.red_slider.value()
+                self.edited_image = adjust_red_saturation(self.edited_image, value)
+                
+            if self.green_slider.value() != 150:
+                value = self.green_slider.value()
+                self.edited_image = adjust_green_saturation(self.edited_image, value)
+        
+            if self.blue_slider.value() != 150:
+                value = self.blue_slider.value()
+                self.edited_image = adjust_blue_saturation(self.edited_image, value)
 
             if self.contrast_slider.value() != 50:
                 value = self.contrast_slider.value() /50

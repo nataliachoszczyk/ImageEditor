@@ -8,5 +8,3 @@ def adjust_brightness(img_array, value):
     adjusted_image_array= img_array.astype(np.uint8)
 
     return adjusted_image_array
-
-
