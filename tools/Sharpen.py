@@ -1,5 +1,5 @@
 import numpy as np
-from filters.Convolve import convolve
+from tools.Convolve import convolve
 
 def sharpen(img_array, level):
     if level == 3: #mean-removal

@@ -1,5 +1,4 @@
 import numpy as np
-from PIL import Image
 
 def adjust_brightness(img_array, value):
     img_array = np.float32(img_array)

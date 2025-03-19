@@ -1,6 +1,4 @@
 import numpy as np
-from PIL import Image
-
 
 def apply_grayscale(image, type):
     r, g, b = (.3, .59, .11) if type == "luminosity" else (.33, .33, .33)

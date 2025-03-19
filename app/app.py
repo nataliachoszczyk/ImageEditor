@@ -1,31 +1,22 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
 from PyQt6.QtWidgets import QWidget, QLabel, QSlider, QHBoxLayout, QVBoxLayout, QPushButton, QFileDialog, QCheckBox, \
-    QButtonGroup, QRadioButton, QLineEdit, QGridLayout
-from PyQt6.QtGui import QPixmap, QImage, QIcon
+    QButtonGroup, QRadioButton, QGridLayout, QFrame
+from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 import io
 
-from filters.Brightness import *
-from filters.Saturation import *
-from filters.ContrastAdjuster import adjust_contrast
-from filters.EdgeDetect import roberts_cross, sobel_operator, laplace_filter
-from filters.Grayscale import apply_grayscale
-from filters.Negative import apply_negative
-from filters.Sharpen import sharpen
-from filters.Threshold import apply_threshold
-from filters.Blur import *
-from filters.Plots import update_plots
-from filters.CreateMatrix import create_matrix
-
-# TODO no image label
-# TODO dodatkowe na 5 
-# TODO uporządkować przyciski i ich nagłówki
-# TODO Możliwość tworzenia dowolnych wag filtrów - O CO CHODZI?
-# TODO eksport aplikacji
-# TODO ogarnąć komentarze w kodzie
+from tools.Brightness import *
+from tools.Saturation import *
+from tools.ContrastAdjuster import adjust_contrast
+from tools.EdgeDetect import roberts_cross, sobel_operator, laplace_filter
+from tools.Grayscale import apply_grayscale
+from tools.Negative import apply_negative
+from tools.Sharpen import sharpen
+from tools.Threshold import apply_threshold
+from tools.Blur import *
+from tools.Plots import update_plots
+from tools.CreateMatrix import create_matrix
 
 class ImageEditor(QWidget):
     def __init__(self):
@@ -60,12 +51,11 @@ class ImageEditor(QWidget):
         self.histogram_label.setMinimumSize(300, 500)
         self.histogram_label.setMaximumSize(300, 750)
         
-        # Display placeholder images initially
         self.display_image(None, self.original_label)
         self.display_image(None, self.edited_label)
         self.display_image(None, self.histogram_label)
 
-        # Brightness slider
+        # slider styles
         slider_style = """
             QSlider::groove:horizontal { background: #BB86FC; height: 4px; border-radius: 2px; }
             QSlider::handle:horizontal { background: white; border: 2px solid white; width: 14px; height: 14px; margin: -6px 0; border-radius: 8px; }
@@ -90,6 +80,32 @@ class ImageEditor(QWidget):
             QSlider::handle:horizontal:hover { background: #EEEEEE; }
         """
         
+        # button styles
+        button_style = """
+            QPushButton {
+                background-color: #BB86FC;
+                border-radius: 8px;
+                padding: 12px;
+                font-size: 16px;
+                font-weight: bold;
+                color: white;
+            }
+            QPushButton:hover { background-color: #503D61; }
+        """
+        
+        mini_button_style = """
+            QPushButton {
+                background-color: #BB86FC;
+                border-radius: 6px;
+                padding: 3px;
+                font-size: 13px;
+                font-weight: bold;
+                color: white;
+            }
+            QPushButton:hover { background-color: #503D61; }
+        """
+        
+        # app style
         self.setStyleSheet("""
             QWidget {
                 background-color: #333333;
@@ -133,6 +149,7 @@ class ImageEditor(QWidget):
             }
         """)
 
+        # brightness slider
         self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
         self.brightness_slider.setStyleSheet(slider_style)
         self.brightness_slider.setMinimum(0)
@@ -140,6 +157,7 @@ class ImageEditor(QWidget):
         self.brightness_slider.setValue(150)  # Default (no change)
         self.brightness_slider.sliderReleased.connect(self.update_image)
         
+        # RGB sliders
         self.red_slider = QSlider(Qt.Orientation.Horizontal)
         self.red_slider.setStyleSheet(red_slider_style)
         self.red_slider.setMinimum(0)
@@ -162,11 +180,11 @@ class ImageEditor(QWidget):
         self.blue_slider.sliderReleased.connect(self.update_image)
         
 
-        #Threshold checkbox
+        #threshold checkbox
         self.threshold_checkbox = QCheckBox("Binary Threshold")
         self.threshold_checkbox.stateChanged.connect(self.update_image)
 
-        # Threshold slider
+        # threshold slider
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal)
         self.threshold_slider.setStyleSheet(slider_style)
         self.threshold_slider.setMinimum(0)
@@ -174,7 +192,7 @@ class ImageEditor(QWidget):
         self.threshold_slider.setValue(122)
         self.threshold_slider.sliderReleased.connect(self.update_image)
 
-        # Grayscale radio buttons
+        # grayscale radio buttons
         self.grayscale_group = QButtonGroup(self)
 
         self.grayscale_none = QRadioButton("None")
@@ -227,14 +245,12 @@ class ImageEditor(QWidget):
         # contrast slider
         self.contrast_slider = QSlider(Qt.Orientation.Horizontal)
         self.contrast_slider.setStyleSheet(slider_style)
-        self.contrast_slider.setMinimum(0)  # Min is 0 for no contrast
-        self.contrast_slider.setMaximum(100)  # Max is 100 for 200% contrast
-        self.contrast_slider.setValue(50)  # Default to 50% (no change)
-
-        # Connect slider value change to update image function
+        self.contrast_slider.setMinimum(0)
+        self.contrast_slider.setMaximum(100)
+        self.contrast_slider.setValue(50)
         self.contrast_slider.sliderReleased.connect(self.update_image)
 
-        #edgedetector
+        #edge detector
         self.edge_group = QButtonGroup(self)
 
         self.edge_none = QRadioButton("None")
@@ -249,41 +265,22 @@ class ImageEditor(QWidget):
 
         self.edge_none.setChecked(True)
         self.edge_group.buttonToggled.connect(self.update_image)
-
-        button_style = """
-            QPushButton {
-                background-color: #BB86FC;
-                border-radius: 8px;
-                padding: 12px;
-                font-size: 16px;
-                font-weight: bold;
-                color: white;
-            }
-            QPushButton:hover { background-color: #503D61; }
-        """
         
-        # Save button
-        save_button = QPushButton("Save Edited Image")
-        save_button.setStyleSheet(button_style)
-        save_button.clicked.connect(self.save_image)
-
-        # Import button
-        import_button = QPushButton("Import Image")
-        import_button.setStyleSheet(button_style)
-        import_button.clicked.connect(self.import_image)
-
-        # Add widgets to layouts
+        # image layout
         image_layout.addWidget(self.original_label)
         image_layout.addWidget(self.edited_label)
         
+        # right bar layout
         right_bar_layout.addWidget(self.histogram_label)
-        
 
+        # custom kernel
         kernel_layout = QHBoxLayout()
         kernel_layout.addWidget(QLabel("Custom kernel weights:"))
         
         button_3x3 = QPushButton("3x3")
+        button_3x3.setStyleSheet(mini_button_style)
         button_5x5 = QPushButton("5x5")
+        button_5x5.setStyleSheet(mini_button_style)
         button_group = QButtonGroup()
         button_group.addButton(button_3x3)
         button_group.addButton(button_5x5)
@@ -291,26 +288,51 @@ class ImageEditor(QWidget):
         kernel_layout.addWidget(button_5x5)
         right_bar_layout.addLayout(kernel_layout)
         
-        matrix_layout = QGridLayout()
-        right_bar_layout.addLayout(matrix_layout)
+        # apply button
+        apply_button = QPushButton("Apply")
+        apply_button.setStyleSheet(mini_button_style)
+        right_bar_layout.addWidget(apply_button)
+        
+        # matrix
+        matrix_container = QFrame()
+        matrix_container.setFixedSize(300, 150)
+        matrix_layout = QGridLayout(matrix_container)
+        matrix_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        right_bar_layout.addWidget(matrix_container)
+        
         button_3x3.clicked.connect(lambda: create_matrix(matrix_layout, 3))
         button_5x5.clicked.connect(lambda: create_matrix(matrix_layout, 5))
+        
+        button_5x5.setDefault(True)
+        button_5x5.setChecked(True)
+        create_matrix(matrix_layout, 5)
+        
+        # import and save buttons
+        save_button = QPushButton("Save Edited Image")
+        save_button.setStyleSheet(button_style)
+        save_button.clicked.connect(self.save_image)
+
+        import_button = QPushButton("Import Image")
+        import_button.setStyleSheet(button_style)
+        import_button.clicked.connect(self.import_image)
         
         right_bar_layout.addWidget(import_button)
         right_bar_layout.addWidget(save_button)
         
+        # threshold
         threshold_layout = QVBoxLayout()
         threshold_layout.addWidget(self.threshold_checkbox)
         threshold_layout.addWidget(QLabel("Binary threshold:"))
         threshold_layout.addWidget(self.threshold_slider)
         
-
+        # grayscale
         grayscale_layout = QVBoxLayout()
         grayscale_layout.addWidget(QLabel("Grayscale Mode:"))
         grayscale_layout.addWidget(self.grayscale_none)
         grayscale_layout.addWidget(self.grayscale_luminosity)
         grayscale_layout.addWidget(self.grayscale_even)
 
+        # blur
         blur_layout = QVBoxLayout()
         blur_layout.addWidget(QLabel(""))
         blur_layout.addWidget(QLabel("Blur Mode:"))
@@ -321,10 +343,12 @@ class ImageEditor(QWidget):
         blur_layout.addWidget(QLabel("Blur intensity:"))
         blur_layout.addWidget(self.blur_slider)
 
+        # sharpness
         sharpness_layout = QVBoxLayout()
         sharpness_layout.addWidget(QLabel("Sharpen:"))
         sharpness_layout.addWidget(self.sharpen_slider)
 
+        # edge detection
         edge_layout = QVBoxLayout()
         edge_layout.addWidget(QLabel("Edge Detection:"))
         edge_layout.addWidget(self.edge_none)
@@ -332,7 +356,7 @@ class ImageEditor(QWidget):
         edge_layout.addWidget(self.edge_sobel)
         edge_layout.addWidget(self.edge_roberts)
 
-
+        # left layout
         left_layout.addWidget(QLabel("Adjust Brightness:"))
         left_layout.addWidget(self.brightness_slider)
         left_layout.addWidget(QLabel("Adjust RGB Saturation"))
@@ -349,10 +373,11 @@ class ImageEditor(QWidget):
         right_layout.addLayout(sharpness_layout)
         right_layout.addLayout(edge_layout)
 
-
+        # control layout
         control_layout.addLayout(left_layout)
         control_layout.addLayout(right_layout)
 
+        # main layouts
         big_layout.addLayout(main_layout)
         big_layout.addLayout(right_bar_layout)
         
@@ -363,7 +388,6 @@ class ImageEditor(QWidget):
         self.resize(1000, 400)
 
     def resizeEvent(self, event):
-        """Automatically resizes images when the window is resized."""
         self.display_image(self.edited_image, self.edited_label)
         self.display_image(self.original_image, self.original_label)
         super().resizeEvent(event)
@@ -373,18 +397,17 @@ class ImageEditor(QWidget):
         label.setText("No Image")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Convert PIL image to QPixmap
+        # PIL image to QPixmap
         byte_array = io.BytesIO()
         pil_image.save(byte_array, format='PNG')
         q_image = QImage.fromData(byte_array.getvalue())
         pixmap = QPixmap.fromImage(q_image)
 
-        # Scale image to fit QLabel while maintaining aspect ratio
+        # scale image to fit QLabel with aspect ratio
         label.setPixmap(
             pixmap.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def update_image(self):
-        """Apply filters to the image and display the edited image."""
         if self.original_image is not None:
             self.edited_image = self.original_image.copy()
 
@@ -444,10 +467,8 @@ class ImageEditor(QWidget):
             update_plots(self)
 
     def import_image(self):
-        # Open file dialog to select an image
         image_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if image_path:
-            # Load the image
             self.original_image = np.array(Image.open(image_path).convert("RGB"))
             self.edited_image = self.original_image
             self.display_image(self.original_image, self.original_label)
@@ -455,7 +476,6 @@ class ImageEditor(QWidget):
         self.update_image()
 
     def save_image(self):
-        # Save the edited image
         save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "Images (*.png *.jpg *.bmp *.jpeg)")
         if save_path:
             Image.fromarray(self.edited_image).save(save_path)
