@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
 from PyQt6.QtWidgets import QWidget, QLabel, QSlider, QHBoxLayout, QVBoxLayout, QPushButton, QFileDialog, QCheckBox, \
-    QButtonGroup, QRadioButton
+    QButtonGroup, QRadioButton, QLineEdit, QGridLayout
 from PyQt6.QtGui import QPixmap, QImage, QIcon
 from PyQt6.QtCore import Qt
 import io
@@ -18,6 +18,7 @@ from filters.Sharpen import sharpen
 from filters.Threshold import apply_threshold
 from filters.Blur import *
 from filters.Plots import update_plots
+from filters.CreateMatrix import create_matrix
 
 # TODO no image label
 # TODO dodatkowe na 5 
@@ -137,28 +138,28 @@ class ImageEditor(QWidget):
         self.brightness_slider.setMinimum(0)
         self.brightness_slider.setMaximum(300)
         self.brightness_slider.setValue(150)  # Default (no change)
-        self.brightness_slider.valueChanged.connect(self.update_image)
+        self.brightness_slider.sliderReleased.connect(self.update_image)
         
         self.red_slider = QSlider(Qt.Orientation.Horizontal)
         self.red_slider.setStyleSheet(red_slider_style)
         self.red_slider.setMinimum(0)
         self.red_slider.setMaximum(150)
         self.red_slider.setValue(0)  # Default (no change)
-        self.red_slider.valueChanged.connect(self.update_image)
+        self.red_slider.sliderReleased.connect(self.update_image)
         
         self.green_slider = QSlider(Qt.Orientation.Horizontal)
         self.green_slider.setStyleSheet(green_slider_style)
         self.green_slider.setMinimum(0)
         self.green_slider.setMaximum(150)
         self.green_slider.setValue(0)  # Default (no change)
-        self.green_slider.valueChanged.connect(self.update_image)
+        self.green_slider.sliderReleased.connect(self.update_image)
         
         self.blue_slider = QSlider(Qt.Orientation.Horizontal)
         self.blue_slider.setStyleSheet(blue_slider_style)
         self.blue_slider.setMinimum(0)
         self.blue_slider.setMaximum(150)
         self.blue_slider.setValue(0)  # Default (no change)
-        self.blue_slider.valueChanged.connect(self.update_image)
+        self.blue_slider.sliderReleased.connect(self.update_image)
         
 
         #Threshold checkbox
@@ -171,7 +172,7 @@ class ImageEditor(QWidget):
         self.threshold_slider.setMinimum(0)
         self.threshold_slider.setMaximum(255)
         self.threshold_slider.setValue(122)
-        self.threshold_slider.valueChanged.connect(self.update_image)
+        self.threshold_slider.sliderReleased.connect(self.update_image)
 
         # Grayscale radio buttons
         self.grayscale_group = QButtonGroup(self)
@@ -213,7 +214,7 @@ class ImageEditor(QWidget):
         self.blur_slider.setMinimum(1)
         self.blur_slider.setMaximum(11)
         self.blur_slider.setValue(1)
-        self.blur_slider.valueChanged.connect(self.update_image)
+        self.blur_slider.sliderReleased.connect(self.update_image)
 
         #sharpen slider
         self.sharpen_slider = QSlider(Qt.Orientation.Horizontal)
@@ -221,7 +222,7 @@ class ImageEditor(QWidget):
         self.sharpen_slider.setMinimum(0)
         self.sharpen_slider.setMaximum(3)
         self.sharpen_slider.setValue(0)
-        self.sharpen_slider.valueChanged.connect(self.update_image)
+        self.sharpen_slider.sliderReleased.connect(self.update_image)
 
         # contrast slider
         self.contrast_slider = QSlider(Qt.Orientation.Horizontal)
@@ -231,7 +232,7 @@ class ImageEditor(QWidget):
         self.contrast_slider.setValue(50)  # Default to 50% (no change)
 
         # Connect slider value change to update image function
-        self.contrast_slider.valueChanged.connect(self.update_image)
+        self.contrast_slider.sliderReleased.connect(self.update_image)
 
         #edgedetector
         self.edge_group = QButtonGroup(self)
@@ -289,7 +290,11 @@ class ImageEditor(QWidget):
         kernel_layout.addWidget(button_3x3)
         kernel_layout.addWidget(button_5x5)
         right_bar_layout.addLayout(kernel_layout)
-
+        
+        matrix_layout = QGridLayout()
+        right_bar_layout.addLayout(matrix_layout)
+        button_3x3.clicked.connect(lambda: create_matrix(matrix_layout, 3))
+        button_5x5.clicked.connect(lambda: create_matrix(matrix_layout, 5))
         
         right_bar_layout.addWidget(import_button)
         right_bar_layout.addWidget(save_button)
