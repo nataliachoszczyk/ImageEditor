@@ -6,7 +6,10 @@ from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 import io
 
+from tools.Convolve import convolve
+
 from tools.Brightness import *
+from tools.Mask import mask
 from tools.Saturation import *
 from tools.ContrastAdjuster import adjust_contrast
 from tools.EdgeDetect import roberts_cross, sobel_operator, laplace_filter
@@ -274,38 +277,49 @@ class ImageEditor(QWidget):
         right_bar_layout.addWidget(self.histogram_label)
 
         # custom kernel
-        kernel_layout = QHBoxLayout()
-        kernel_layout.addWidget(QLabel("Custom kernel weights:"))
-        
-        button_3x3 = QPushButton("3x3")
-        button_3x3.setStyleSheet(mini_button_style)
-        button_5x5 = QPushButton("5x5")
-        button_5x5.setStyleSheet(mini_button_style)
-        button_group = QButtonGroup()
-        button_group.addButton(button_3x3)
-        button_group.addButton(button_5x5)
-        kernel_layout.addWidget(button_3x3)
-        kernel_layout.addWidget(button_5x5)
-        right_bar_layout.addLayout(kernel_layout)
-        
+        self.kernel_layout = QHBoxLayout()
+        self.kernel_layout.addWidget(QLabel("Custom kernel weights:"))
+
+        # Assuming mini_button_style is already defined, here's an example:
+
+        self.button_3x3 = QPushButton("3x3")
+        self.button_3x3.setStyleSheet(mini_button_style)
+        self.button_3x3.setCheckable(True)  # Make it checkable
+
+        self.button_5x5 = QPushButton("5x5")
+        self.button_5x5.setStyleSheet(mini_button_style)
+        self.button_5x5.setCheckable(True)  # Make it checkable
+
+        self.button_group = QButtonGroup()
+        self.button_group.setExclusive(True)  # Ensure only one button can be checked at a time
+        self.button_group.addButton(self.button_3x3)
+        self.button_group.addButton(self.button_5x5)
+
+        # Add the buttons to the layout
+        self.kernel_layout.addWidget(self.button_3x3)
+        self.kernel_layout.addWidget(self.button_5x5)
+        right_bar_layout.addLayout(self.kernel_layout)
+
         # apply button
-        apply_button = QPushButton("Apply")
-        apply_button.setStyleSheet(mini_button_style)
-        right_bar_layout.addWidget(apply_button)
-        
+        self.apply_button = QPushButton("Apply")
+        self.apply_button.setStyleSheet(mini_button_style)
+        right_bar_layout.addWidget(self.apply_button)
+        self.apply_button.setCheckable(True)
+        self.apply_button.clicked.connect(self.update_image)
+
         # matrix
-        matrix_container = QFrame()
-        matrix_container.setFixedSize(300, 150)
-        matrix_layout = QGridLayout(matrix_container)
-        matrix_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        right_bar_layout.addWidget(matrix_container)
+        self.matrix_container = QFrame()
+        self.matrix_container.setFixedSize(300, 150)
+        self.matrix_layout = QGridLayout(self.matrix_container)
+        self.matrix_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        right_bar_layout.addWidget(self.matrix_container)
         
-        button_3x3.clicked.connect(lambda: create_matrix(matrix_layout, 3))
-        button_5x5.clicked.connect(lambda: create_matrix(matrix_layout, 5))
+        self.button_3x3.clicked.connect(lambda: create_matrix(self.matrix_layout, 3))
+        self.button_5x5.clicked.connect(lambda: create_matrix(self.matrix_layout, 5))
         
-        button_5x5.setDefault(True)
-        button_5x5.setChecked(True)
-        create_matrix(matrix_layout, 5)
+        self.button_5x5.setDefault(True)
+        self.button_5x5.setChecked(True)
+        create_matrix(self.matrix_layout, 5)
         
         # import and save buttons
         save_button = QPushButton("Save Edited Image")
@@ -462,6 +476,29 @@ class ImageEditor(QWidget):
                 self.edited_image = sobel_operator(self.edited_image)
             elif edge_mode == 3:
                 self.edited_image = roberts_cross(self.edited_image)
+
+            if self.apply_button.isChecked():
+                checked_button = self.button_group.checkedButton()
+                if self.button_3x3.isChecked():
+                    kernel_size = 3
+                else:
+                    kernel_size = 5
+                print(f"Applying custom kernel of size {kernel_size}")
+                kernel = []
+                for i in range(kernel_size):
+                    row = []
+                    for j in range(kernel_size):
+                        item = self.matrix_layout.itemAtPosition(i, j)
+                        if item is None:
+                            print(f"Warning: No widget at ({i}, {j})")
+                            continue  # Skip this cell
+
+                        widget = item.widget()
+                        if widget:
+                            row.append(widget.text())
+                    kernel.append(row)
+                kernel = np.array(kernel, dtype=np.float32)
+                self.edited_image = mask(self.edited_image, kernel)
 
             self.display_image(self.edited_image, self.edited_label)
             update_plots(self)
