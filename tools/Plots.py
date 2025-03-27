@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PyQt6.QtGui import QImage, QPixmap
 
-def update_plots(self):
+from tools.Threshold import apply_threshold
 
+
+def update_plots(self):
     img_array = np.array(self.edited_image)
 
     colors = ['red', 'green', 'blue']
@@ -30,7 +32,7 @@ def update_plots(self):
                         0.33 * img_array[:, :, 1] +
                         0.33 * img_array[:, :, 2]).astype(np.uint8)
 
-    # grayscale histogram
+    # Grayscale histogram
     histogram, bin_edges = np.histogram(grayscale_values, bins=256, range=(0, 256))
     ax[3].fill_between(bin_edges[:-1], histogram, color="black", alpha=1)
     ax[3].set_xlim([0, 255])
@@ -38,30 +40,33 @@ def update_plots(self):
     ax[3].set_facecolor('#333333')
     ax[3].tick_params(axis='x', colors='white')
     ax[3].tick_params(axis='y', colors='white')
-    ax[3].set_title("Grayscale Histogram", color = 'white', fontsize=18)
+    ax[3].set_title("Grayscale Histogram", color='white', fontsize=18)
 
 
-    # horizontal projection - sum of pixel values along rows
-    horizontal_projection = np.sum(grayscale_values, axis=1)
+    threshold = self.threshold_slider.value()
+    binary_image = apply_threshold(img_array, threshold)
+
+    # Horizontal projection - sum of binary values along rows
+    horizontal_projection = np.sum(binary_image, axis=1)
     ax[4].plot(horizontal_projection, color="#BB86FC", linewidth=4)
-    ax[4].set_xlim([0, grayscale_values.shape[0]])
+    ax[4].set_xlim([0, binary_image.shape[0]])
     ax[4].set_yticks([])
     ax[4].set_facecolor('#333333')
     ax[4].tick_params(axis='x', colors='white')
     ax[4].tick_params(axis='y', colors='white')
     ax[4].set_title("Horizontal Projection", color='white', fontsize=18)
 
-    # vertical projection - sum of pixel values along columns
-    vertical_projection = np.sum(grayscale_values, axis=0)
+    # Vertical projection - sum of binary values along columns
+    vertical_projection = np.sum(binary_image, axis=0)
     ax[5].plot(vertical_projection, color="#BB86FC", linewidth=4)
-    ax[5].set_xlim([0, grayscale_values.shape[1]])
+    ax[5].set_xlim([0, binary_image.shape[1]])
     ax[5].set_yticks([])
     ax[5].set_facecolor('#333333')
     ax[5].tick_params(axis='x', colors='white')
     ax[5].tick_params(axis='y', colors='white')
     ax[5].set_title("Vertical Projection", color='white', fontsize=18)
-    
-    # plot to canvas
+
+    # Plot to canvas
     fig.tight_layout()
     canvas = FigureCanvas(fig)
     canvas.draw()
@@ -69,9 +74,9 @@ def update_plots(self):
     image_data = np.frombuffer(canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))
     image_data = image_data[:, :, [3, 2, 1, 0]]
 
-
     histogram_image = QImage(image_data.tobytes(), width, height, width * 4, QImage.Format.Format_ARGB32)
 
     self.histogram_label.setPixmap(
-        QPixmap.fromImage(histogram_image).scaled(self.histogram_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        QPixmap.fromImage(histogram_image).scaled(self.histogram_label.size(), Qt.AspectRatioMode.KeepAspectRatio,
+                                                  Qt.TransformationMode.SmoothTransformation))
     plt.close(fig)
